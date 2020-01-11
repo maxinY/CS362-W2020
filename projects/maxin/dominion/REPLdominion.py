@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 13 15:26:55 2015
-
-@author: tfleck
-"""
 import random
 from collections import Counter, OrderedDict
 from operator import itemgetter
@@ -52,9 +46,9 @@ class Province(Victory_card):
     def __init__(self):
         Victory_card.__init__(self,"Province",8,6)
 
-class Gardens(Victory_card):
+class Garden(Victory_card):
     def __init__(self):
-        Victory_card.__init__(self,"Gardens",4,0)
+        Victory_card.__init__(self,"Garden",4,0)
 
 class Curse(Card):
     def __init__(self):
@@ -365,16 +359,17 @@ class Throne_Room(Action_card):
 class Player():
     def __init__(self,name):
         self.name = name
-        self.hand = []
-        self.deck = [Copper()]*7 + [Estate()]*3
-        random.shuffle(self.deck)
+        deal = [Copper()]*7 + [Estate()]*3
+        random.shuffle(deal)
+        self.hand = deal[:5]
+        self.deck = deal[5:]
         self.played = []
         self.discard = []
         self.aside = []
         self.hold = []
+        random.shuffle(self.deck)
         for i in range(5):
-            self.draw()
-
+            self.draw
     def other(self):
         return self.played+self.discard+self.hold+self.aside
     def stack(self):
@@ -461,15 +456,15 @@ class Player():
 
     def show(self):
         print (self.name)
-        print ("hand:", ", ".join(sorted(namesinlist(self.hand))))
-        if len(self.deck)>0:
-            print ("deck (alphabetical order):", ", ".join(sorted(namesinlist(self.deck))))
-        if len(self.discard)>0:
-            print ("discard:", ", ".join(sorted(namesinlist(self.discard))))
+        print ("hand:  ", namesinlist(self.hand))
+        shuffled_deck = namesinlist(self.deck)
+        random.shuffle(shuffled_deck)
+        print ("deck (not in order):  ", shuffled_deck)
+        print ("discard: ", namesinlist(self.discard))
         if len(self.played)>0:
-            print ("played:", ", ".join(sorted(namesinlist(self.played))))
+            print ("played: ", namesinlist(self.played))
         if len(self.aside)>0:
-            print ("aside:", ", ".join(sorted(namesinlist(self.aside))))
+            print ("aside: ",namesinlist(self.aside))
         print ("\r")
     
     def action_balance(self):
@@ -486,7 +481,6 @@ class Player():
                 summary[c.name] += 1
             else:
                 summary[c.name] = 1
-        summary['VICTORY POINTS']=self.calcpoints()
         return summary
 
     def calcpoints(self):
@@ -496,7 +490,7 @@ class Player():
         for c in self.stack():
             tally += c.vpoints
             n += 1
-            if c.name == "Gardens":
+            if c.name == "Garden":
                 gardens+=1
         return tally + n//10 * gardens
 
@@ -509,13 +503,13 @@ class ComputerPlayer(Player):
         self.buygaintable1 = ["Province","Gold","Laboratory","Festival","Witch",
         "Council Room","Market","Militia","Adventurer","Smithy","Bureaucrat","Silver","Moat",""]
         #end of game        
-        self.buygaintable2 = ["Province","Gardens","Duchy","Estate","Gold","Silver",""]
+        self.buygaintable2 = ["Province","Garden","Duchy","Estate","Gold","Silver",""]
         #beginning and middle of the game, too many action cards
         self.buygaintable3 = ["Province","Gold","Festival","Laboratory","Market","Village",
         "Silver",""]
         self.playtable1 = ["Village","Festival","Market","Laboratory","Witch",
         "Council Room","Militia","Adventurer","Smithy","Bureaucrat","Moat",""]
-        self.discardtable1 = ["Gardens","Duchy","Province","Estate","Curse","Copper",
+        self.discardtable1 = ["Garden","Duchy","Province","Estate","Curse","Copper",
         "Village","Bureaucrat","Silver","Militia","Smithy","Council Room","Witch",
         "Festival","Market","Adventurer","Laboratory","Gold","Moat"]
         
@@ -531,7 +525,7 @@ class ComputerPlayer(Player):
             if playthis:
                 c = self.getcard(playthis,supply,self.hand,"your hand",['action'])
                 if c:
-                    print (self.name + " plays " + c.name)
+                    #print (self.name + " plays " + c.name)
                     self.actions = self.actions - 1
                     c.use(self,trash)
                     self.index=0                    
@@ -564,7 +558,7 @@ class ComputerPlayer(Player):
                     self.index = 0
                     self.buys = self.buys -1
                     self.purse = self.purse - c.cost
-                    print (self.name + " bought " + c.name)
+                    #print (self.name + " bought " + c.name)
                 else:
                     self.index += 1
                     
@@ -627,7 +621,7 @@ class TablePlayer(ComputerPlayer):
             print(name)
         self.playtable1 = ["Village","Festival","Market","Laboratory","Witch",
         "Council Room","Militia","Adventurer","Smithy","Bureaucrat","Moat",""]
-        self.discardtable1 = ["Gardens","Duchy","Province","Estate","Curse","Copper",
+        self.discardtable1 = ["Garden","Duchy","Province","Estate","Curse","Copper",
         "Village","Bureaucrat","Silver","Militia","Smithy","Council Room","Witch",
         "Festival","Market","Adventurer","Laboratory","Gold","Moat"]
     
@@ -740,15 +734,6 @@ def totalbuypower(cardlist):
             TBP += c.coins
     return TBP
 
-def cardsummaries(players):
-    cardsums={}
-    for player in players:
-        cardsums[player.name]=player.cardsummary()
-    cardsdf = pandas.DataFrame(cardsums).fillna(0).sort_index()
-    vp=cardsdf.loc[['VICTORY POINTS']]
-    cardsdf.drop(['VICTORY POINTS'],inplace=True)
-    return pandas.concat([cardsdf,vp],axis=0).fillna(0).astype(int)
-
 def countsupply(supply,form):
     return [len(supply[a]) for a in form]
 
@@ -760,3 +745,109 @@ def rankcards(form,vector):
     od = OrderedDict(zip(form,vector))
     sd = OrderedDict(sorted(od.items(),key = itemgetter(1),reverse=True))
     return list(sd.keys())
+    
+#import Dominion
+#import random
+from collections import defaultdict
+
+#Get player names
+player_names = ["Timothy","*Grover","*Elmo"]
+
+#number of curses and victory cards
+if len(player_names)>2:
+    nV=12
+else:
+    nV=8
+nC = -10 + 10 * len(player_names)
+
+#Define box
+box = {}
+box["Woodcutter"]=[Woodcutter()]*10
+box["Smithy"]=[Smithy()]*10
+box["Laboratory"]=[Laboratory()]*10
+box["Village"]=[Village()]*10
+box["Festival"]=[Festival()]*10
+box["Market"]=[Market()]*10
+box["Chancellor"]=[Chancellor()]*10
+box["Workshop"]=[Workshop()]*10
+box["Moneylender"]=[Moneylender()]*10
+box["Chapel"]=[Chapel()]*10
+box["Cellar"]=[Cellar()]*10
+box["Remodel"]=[Remodel()]*10
+box["Adventurer"]=[Adventurer()]*10
+box["Feast"]=[Feast()]*10
+box["Mine"]=[Mine()]*10
+box["Library"]=[Library()]*10
+box["Garden"]=[Garden()]*nV
+box["Moat"]=[Moat()]*10
+box["Council Room"]=[Council_Room()]*10
+box["Witch"]=[Witch()]*10
+box["Bureaucrat"]=[Bureaucrat()]*10
+box["Militia"]=[Militia()]*10
+box["Spy"]=[Spy()]*10
+box["Thief"]=[Thief()]*10
+box["Throne Room"]=[Throne_Room()]*10
+
+supply_order = {0:['Curse','Copper'],2:['Estate','Cellar','Chapel','Moat'],
+                3:['Silver','Chancellor','Village','Woodcutter','Workshop'],
+                4:['Garden','Bureaucrat','Feast','Militia','Moneylender','Remodel','Smithy','Spy','Thief','Throne Room'],
+                5:['Duchy','Market','Council Room','Festival','Laboratory','Library','Mine','Witch'],
+                6:['Gold','Adventurer'],8:['Province']}
+
+#Pick 10 cards from box to be in the supply.
+boxlist = [k for k in box]
+random.shuffle(boxlist)
+random10 = boxlist[:10]
+supply = defaultdict(list,[(k,box[k]) for k in random10])
+
+
+#The supply always has these cards
+supply["Copper"]=[Copper()]*(60-len(player_names)*7)
+supply["Silver"]=[Silver()]*40
+supply["Gold"]=[Gold()]*30
+supply["Estate"]=[Estate()]*nV
+supply["Duchy"]=[Duchy()]*nV
+supply["Province"]=[Province()]*nV
+supply["Curse"]=[Curse()]*nC
+
+#initialize the trash
+trash = []
+
+#Costruct the Player objects
+players = []
+for name in player_names:
+    if name[0]=="*":
+        players.append(ComputerPlayer(name[1:]))
+    elif name[0]=="^":
+        players.append(TablePlayer(name[1:]))
+    else:
+        players.append(Player(name))
+
+#Play the game
+turn  = 0
+while not gameover(supply):
+    turn += 1    
+    print("\r")    
+    for value in supply_order:
+        print (value)
+        for stack in supply_order[value]:
+            if stack in supply:
+                print (stack, len(supply[stack]))
+    print("\r")
+    for player in players:
+        print (player.name,player.calcpoints())
+    print ("\rStart of turn " + str(turn))    
+    for player in players:
+        if not gameover(supply):
+            print("\r")
+            player.turn(players,supply,trash)
+            
+
+#Final score
+print ("\r")
+for player in players:
+    print (player.name,player.calcpoints())
+
+print ("\n")
+for player in players:
+    print (player.name,player.cardsummary())
